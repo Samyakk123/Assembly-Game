@@ -17,7 +17,7 @@
 
 .data
 	SPACESHIP: .word 260 384 388 392
-	ENEMIES: .word 128 256 384
+	ENEMIES: .word 124 252 380
 
 .text
 
@@ -37,20 +37,135 @@ main:
 	sw $t4, 392($t0)
 	sw $t4, 384($t0)
 
+
+	j getEnemyLocations
+	
+
+#	sw $t4, 3968($t0)
 	
 	j constantLoop
 	li $v0, 10
 	syscall
 
+
+getEnemyLocations:
+	la $t5, ENEMIES
+	# Generate a random number
+	li $v0, 42
+	li $a0, 0
+	li $a1, 31
+	syscall
+	
+	addi $a2, $zero, 128
+	mult $a0, $a2
+	mflo $a0
+	addi $a0, $a0, 124
+	
+	
+	# Save onto the enemy array
+	sw $a0, 0($t5)
+	
+	# Generate another random number
+	li $v0, 42
+	li $a0, 0
+	li $a1, 30
+	syscall
+	
+	mult $a0, $a2
+	mflo $a0
+	addi $a0, $a0, 124
+	
+	
+	sw $a0, 4($t5)
+	
+	# Generate a third random number
+	li $v0, 42
+	li $a0, 0
+	li $a1, 30
+	syscall
+	
+	mult $a0, $a2
+	mflo $a0
+	addi $a0, $a0, 124	
+	
+	sw $a0, 8($t5)
+	
+	j constantLoop
+	
 constantLoop:
 	
 	li $t9, 0xffff0000 # Set the default address
 	lw $t8, 0($t9)
 	# Check if ANY key was pressed
 	beq $t8, 1, keyPressed
+	
+	
+	# increment enemy ships to move
+	jal incrementEnemy
 
+	li $v0, 32
+        li $a0, 40 # 25 hertz Refresh rate
+        syscall
 	j constantLoop
 
+
+
+incrementEnemy: 
+	la $t5, ENEMIES
+	lw $a1, 0($t5) # This should give you the first element of array	
+	lw $a2, 4($t5)
+	lw $a3, 8($t5)
+
+	# Checks that if it reaches the end u replace randomly
+	
+	
+	
+	# Make the old place black
+	add $t3, $a1, $t0
+	sw $t1, 0($t3)
+	sw $t1, 128($t3)
+	sw $t1, 256($t3)
+	
+	add $t3, $a2, $t0
+	sw $t1, 0($t3)
+	sw $t1, 128($t3)
+	sw $t1, 256($t3)	
+	
+	add $t3, $a3, $t0
+	sw $t1, 0($t3)
+	sw $t1, 128($t3)
+	sw $t1, 256($t3)
+		
+	# Subtract each one by 4
+	subi $a1, $a1, 4
+	subi $a2, $a2, 4
+	subi $a3, $a3, 4
+	
+	# Save the values back onto the array
+	sw $a1, 0($t5)
+	sw $a2, 4($t5)
+	sw $a3, 8($t5)
+	
+	# Calculate new location to be placed on screen
+	add $a1, $a1, $t0
+	add $a2, $a2, $t0
+	add $a3, $a3, $t0
+
+	# Draw those corresponding values
+	sw $t4,	0($a1)
+	sw $t4,	128($a1)
+	sw $t4,	256($a1)
+	
+	
+	sw $t4, 0($a2)
+	sw $t4, 128($a2)
+	sw $t4, 256($a2)
+	
+	sw $t4, 0($a3)
+	sw $t4, 128($a3)
+	sw $t4, 256($a3)
+						
+	jr $ra
 
 keyPressed:
 	lw $t2, 4($t9)
@@ -75,6 +190,11 @@ downIsPressed:
 	lw $a2, 4($t5)
 	lw $a3, 8($t5)
 	lw $t7, 12($t5)
+	
+	# Check if it's border
+	subi $t6, $a2, 3968
+	bgez $t6, constantLoop	
+	
 	
 	# First save ones need to change back to black
 	
@@ -103,6 +223,12 @@ upIsPressed:
 	lw $a3, 8($t5)
 	lw $t7, 12($t5)
 	
+	# Check if it's border
+	
+	subi $t6, $a1, 125
+	blez $t6, constantLoop	
+	
+	
 	# First save ones need to change back to black
 	
 	add $t3, $a2, $t0
@@ -130,6 +256,14 @@ leftIsPressed:
 	lw $a3, 8($t5)
 	lw $t7, 12($t5)
 	
+	# Check if it's border
+	addi $t6, $zero, 128
+	div $a2, $t6
+	mfhi $t6
+	
+	beq $t6, $zero, constantLoop	
+	
+	
 	# First save ones need to change back to black
 	
 	add $t3, $a1, $t0
@@ -152,16 +286,28 @@ rightIsPressed:
 	# sw is used to save the value onto the array
 	
 	
+	# Load the right most element early so we can check with it
+	lw $t7, 12($t5)
+
+
+	# Check if it's border
+	addi $t6, $zero, 128
+	
+	subi $a1, $t7, 124
+	
+	div $a1, $t6
+	mfhi $a1
+	
+	beq $a1, $zero, constantLoop	
+	
+	# Load the remaining 3 values afterwards (overwrite a1)
 	lw $a1, 0($t5) # This should give you the first element of array	
 	lw $a2, 4($t5)
 	lw $a3, 8($t5)
-	lw $t7, 12($t5)
-	
+
+
 	# First save ones need to change back to black
 
-	
-	
-	
 	add $t3, $a1, $t0
 	sw $t1, 0($t3)
 	add $t3, $a2, $t0
