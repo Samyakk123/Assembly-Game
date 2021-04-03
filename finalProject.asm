@@ -8,7 +8,8 @@
 # -Base Address for Display: 0x10008000 ($gp)
 #
 .eqv BASE_ADDRESS 0x10008000
-.eqv SHIPCOLOR 0x964B00
+.eqv SHIPCOLOR 0x1F75FE
+.eqv TOMATO 0xFF6347
 
 .eqv LEFT 97
 .eqv RIGHT 100
@@ -17,7 +18,7 @@
 
 .data
 	SPACESHIP: .word 260 384 388 392
-	ENEMIES: .word 124 252 380
+	ENEMIES: .word 128 768 2304
 
 .text
 
@@ -42,34 +43,37 @@ main:
 	
 
 #	sw $t4, 3968($t0)
-	
-	j constantLoop
 	li $v0, 10
 	syscall
 
 
 getEnemyLocations:
+	li $t4, TOMATO
 	la $t5, ENEMIES
-	# Generate a random number
+	addi $a2, $zero, 128
+	
+	# Generate another random number
 	li $v0, 42
 	li $a0, 0
-	li $a1, 31
+	li $a1, 10
 	syscall
 	
-	addi $a2, $zero, 128
 	mult $a0, $a2
 	mflo $a0
 	addi $a0, $a0, 124
 	
 	
-	# Save onto the enemy array
 	sw $a0, 0($t5)
-	
+
+
+
 	# Generate another random number
 	li $v0, 42
 	li $a0, 0
-	li $a1, 30
+	li $a1, 10
 	syscall
+	
+	add $a0, $a0, 10
 	
 	mult $a0, $a2
 	mflo $a0
@@ -81,16 +85,21 @@ getEnemyLocations:
 	# Generate a third random number
 	li $v0, 42
 	li $a0, 0
-	li $a1, 30
+	li $a1, 10
 	syscall
-	
+	add $a0, $a0, 20
 	mult $a0, $a2
 	mflo $a0
 	addi $a0, $a0, 124	
 	
 	sw $a0, 8($t5)
+
+
 	
 	j constantLoop
+
+
+
 	
 constantLoop:
 	
@@ -111,15 +120,14 @@ constantLoop:
 
 
 incrementEnemy: 
+	li $t4, TOMATO
 	la $t5, ENEMIES
 	lw $a1, 0($t5) # This should give you the first element of array	
 	lw $a2, 4($t5)
 	lw $a3, 8($t5)
 
-	# Checks that if it reaches the end u replace randomly
-	
-	
-	
+
+		
 	# Make the old place black
 	add $t3, $a1, $t0
 	sw $t1, 0($t3)
@@ -136,6 +144,14 @@ incrementEnemy:
 	sw $t1, 128($t3)
 	sw $t1, 256($t3)
 		
+	# Checks that if it reaches the end u replace randomly
+	addi $t6, $zero, 128
+	div $a1, $t6
+	mfhi $a1
+	
+	beq $a1, $zero, getEnemyLocations		
+		
+	lw $a1, 0($t5)
 	# Subtract each one by 4
 	subi $a1, $a1, 4
 	subi $a2, $a2, 4
@@ -168,6 +184,7 @@ incrementEnemy:
 	jr $ra
 
 keyPressed:
+	li $t4, SHIPCOLOR
 	lw $t2, 4($t9)
 	beq $t2, LEFT, leftIsPressed
 	beq $t2, RIGHT, rightIsPressed
