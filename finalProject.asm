@@ -10,6 +10,7 @@
 .eqv BASE_ADDRESS 0x10008000
 .eqv SHIPCOLOR 0x1F75FE
 .eqv TOMATO 0xFF6347
+.eqv RED 0xFF0000
 
 .eqv LEFT 97
 .eqv RIGHT 100
@@ -111,6 +112,9 @@ constantLoop:
 	
 	# increment enemy ships to move
 	jal incrementEnemy
+	
+	
+	jal checkCollision
 
 	li $v0, 32
         li $a0, 40 # 25 hertz Refresh rate
@@ -118,6 +122,143 @@ constantLoop:
 	j constantLoop
 
 
+
+handleCollision:
+	li $t4, RED
+	
+	la $t5, SPACESHIP
+	lw $a1, 0($t5) # This should give you the first element of array	
+	lw $a2, 4($t5)
+	lw $a3, 8($t5)
+	lw $t7, 12($t5)
+
+	add $a1, $a1, $t0
+	add $a2, $a2, $t0
+	add $a3, $a3, $t0
+	add $t7, $t7, $t0
+	
+	sw $t4,	0($a1)
+	sw $t4, 0($a2)
+	sw $t4, 0($a3)
+	sw $t4, 0($t7)		
+	        
+	li $v0, 32
+        li $a0, 50 # 25 hertz Refresh rate
+        syscall
+        
+        j constantLoop
+        
+        
+
+checkCollision:
+	la $t4, SPACESHIP
+	la $t5, ENEMIES
+	
+	
+	# Get the first element of spaceship
+	lw $a1, 0($t4)
+	# Get the first element of enemy object
+	lw $a2, 0($t5)
+	
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision
+	
+	# Now check if spaceship first hit second object
+	lw $a2, 4($t5)
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision	
+	
+	# Now check if spaceship first hit third object
+	lw $a2, 8($t5)
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision	
+	
+	# CheckCheck if spaceship second hit first object
+	lw $a1, 4($t4)
+	lw  $a2, 0($t5)
+	
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision	
+	
+	# Chcek if spaceship second hit second object
+	lw $a2, 4($t5)
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision	
+	
+	# Check if spaceship second hit third object
+	lw $a2, 8($t5)
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision	
+	
+	# Check if spaceship third hit first object
+	lw $a1, 8($t4)
+	lw  $a2, 0($t5)
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision		
+	
+	# Check if spaceship third hit second object
+	
+	lw $a2, 4($t5)
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision
+	
+	# Check if spaceship third hit third object
+	lw $a2, 8($t5)
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision	
+	
+	# Check 4th element now
+	lw $a1, 12($t4)
+	lw  $a2, 0($t5)	
+	# Check the 4th element with the first object
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision		
+	
+	lw $a2, 4($t5)
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision		
+	
+	lw $a2, 8($t5)
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision
+	addi $a2, $a2, 128
+	beq $a1, $a2, handleCollision		
+	
+	jr $ra
 
 incrementEnemy: 
 	li $t4, TOMATO
