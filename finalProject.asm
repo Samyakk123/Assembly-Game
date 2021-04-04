@@ -40,15 +40,6 @@ clearScreen:
 	li $t4, BLACK
 	j clear
 
-endScreen: 
-	li $v0, 32
-        li $a0, 1000 # 25 hertz Refresh rate
-        syscall
-        
-        add $a1, $zero, $t0
-	li $t4, BLACK
-        
-
 reduceHealth: 
 	li $t4, RED
 	la $t5, HEALTH
@@ -105,9 +96,7 @@ generateHealth:
 	jr $ra
 
 createBorder:
-	
 	beq $t5, $t6, getEnemyLocations
-	
 	sw $t4, 0($t5)
 	addi $t5, $t5, 4
 	j createBorder
@@ -123,9 +112,6 @@ main:
 	sw $t4, 1408($t0)
 	sw $t4, 1412($t0)
 	sw $t4, 1416($t0)
-	
-	
-	sw $t4, 4092($t0)
 	
 	addi $t6, $t0, 896
 	add $t5, $zero, $zero
@@ -144,38 +130,26 @@ getEnemyLocations:
 	li $t4, TOMATO
 	la $t5, ENEMIES
 	addi $a2, $zero, 128
-	
 	# Generate another random number
 	li $v0, 42
 	li $a0, 0
 	li $a1, 8
 	syscall
-	
 	addi $a0, $a0, 7
 	mult $a0, $a2
 	mflo $a0
 	addi $a0, $a0, 124
-	
-	
 	sw $a0, 0($t5)
-
-
-
 	# Generate another random number
 	li $v0, 42
 	li $a0, 0
 	li $a1, 8
 	syscall
-	
 	add $a0, $a0, 14
-	
 	mult $a0, $a2
 	mflo $a0
 	addi $a0, $a0, 124
-	
-	
 	sw $a0, 4($t5)
-	
 	# Generate a third random number
 	li $v0, 42
 	li $a0, 0
@@ -185,15 +159,8 @@ getEnemyLocations:
 	mult $a0, $a2
 	mflo $a0
 	addi $a0, $a0, 124	
-	
 	sw $a0, 8($t5)
-
-
-	
 	j constantLoop
-
-
-
 	
 constantLoop:
 	
@@ -634,7 +601,42 @@ rePlaceShip:
 	sw $t4, 0($t7)
 	j constantLoop
 	
+endScreen: 
+	li $v0, 32
+        li $a0, 1000 # 25 hertz Refresh rate
+        syscall
+        
+        li $t4, GREEN
+        # Top of E
+        sw $t4, 400($t0)
+        sw $t4, 404($t0)
+        sw $t4, 408($t0)
+        sw $t4, 412($t0)
+        sw $t4, 416($t0)
+        sw $t4, 420($t0)
 	
+	sw $t4, 528($t0)
+	sw $t4, 656($t0)
+	sw $t4, 784($t0)
+	sw $t4, 912($t0)
+	
+	sw $t4, 916($t0)
+	sw $t4, 920($t0)
+	sw $t4, 924($t0)
+	sw $t4, 928($t0)
+	sw $t4, 932($t0)
+	
+	
+	sw $t4, 1040($t0)
+	sw $t4, 1168($t0)
+	sw $t4, 1296($t0)
+	sw $t4, 1424($t0)
+	
+	sw $t4, 1428($t0)
+	sw $t4, 1432($t0)
+	sw $t4, 1436($t0)
+	sw $t4, 1440($t0)		
+	sw $t4, 1444($t0)	
 # $t0 stores the base address for displayli $t1, 0xff0000
 # $t1 stores the red colour codeli $t2, 0x00ff00
 # $t2 stores the green colour codeli $t3, 0x0000ff
