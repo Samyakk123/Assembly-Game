@@ -11,21 +11,106 @@
 .eqv SHIPCOLOR 0x1F75FE
 .eqv TOMATO 0xFF6347
 .eqv RED 0xFF0000
-
+.eqv GREEN 0x00FF00
 .eqv LEFT 97
 .eqv RIGHT 100
 .eqv UP 119
 .eqv DOWN 115
+.eqv GREY 0xC0C0C0
+.eqv BLACK 0x000000
 
 .data
-	SPACESHIP: .word 260 384 388 392
+	SPACESHIP: .word 1284 1408 1412 1416
 	ENEMIES: .word 128 768 2304
-
+	HEALTH: .word 348
 .text
 
 .globl main	
 
 # Put main loop in here
+clear:
+	sub $a2, $a1, $t0
+	beq $a2, 4092, endScreen
+	sw $t4, 0($a1)
+	addi $a1, $a1, 4
+	j clear
+
+clearScreen:
+        add $a1, $zero, $t0
+	li $t4, BLACK
+	j clear
+
+endScreen: 
+	li $v0, 32
+        li $a0, 1000 # 25 hertz Refresh rate
+        syscall
+        
+        add $a1, $zero, $t0
+	li $t4, BLACK
+        
+
+reduceHealth: 
+	li $t4, RED
+	la $t5, HEALTH
+	# Load the value of t5
+	lw $a1, 0($t5)
+	
+	add $a1, $a1, $t0
+	
+	# Make the pixels red for a second
+	sw $t4, 0($a1)
+	sw $t4, 128($a1)
+	sw $t4, 4($a1)
+	sw $t4, 132($a1)
+	
+	# Put wait timer here
+	li $v0, 32
+        li $a0, 40 # 25 hertz Refresh rate
+        syscall
+        
+	li $t4, BLACK
+	
+	sw $t4, 0($a1)
+	sw $t4, 128($a1)
+	sw $t4, 4($a1)
+	sw $t4, 132($a1)
+		
+	# Take away the base address and then add 8 [move 2 to the right]
+	sub $a1, $a1, $t0
+	addi $a1, $a1, 8
+	
+	beq $a1, 372, clearScreen
+	sw $a1, 0($t5)
+	
+	
+	jr $ra
+
+generateHealth:
+
+	li $t4, GREEN
+	
+	sw $t4, 348($t0)
+	sw $t4, 352($t0)
+	sw $t4, 356($t0)
+	sw $t4, 360($t0)
+	sw $t4, 364($t0)
+	sw $t4, 368($t0)
+	
+	sw $t4, 476($t0)
+	sw $t4, 480($t0)
+	sw $t4, 484($t0)
+	sw $t4, 488($t0)
+	sw $t4, 492($t0)
+	sw $t4, 496($t0)		
+	jr $ra
+
+createBorder:
+	
+	beq $t5, $t6, getEnemyLocations
+	
+	sw $t4, 0($t5)
+	addi $t5, $t5, 4
+	j createBorder
 main:
 	li $t0, BASE_ADDRESS
 	li $t1, 0x000000
@@ -34,16 +119,23 @@ main:
 	sw $t2, 4($t0)
 	# Let this be a temporary ship
 	# This is the spaceship initial value
-	sw $t4,	260($t0)
-	sw $t4, 388($t0)
-	sw $t4, 392($t0)
-	sw $t4, 384($t0)
-
-
-	j getEnemyLocations
+	sw $t4,	1284($t0)
+	sw $t4, 1408($t0)
+	sw $t4, 1412($t0)
+	sw $t4, 1416($t0)
 	
+	
+	sw $t4, 4092($t0)
+	
+	addi $t6, $t0, 896
+	add $t5, $zero, $zero
+	add $t5, $t5, $t0
+	addi $t5, $t5, 768
+	
+	jal generateHealth
+	li $t4, GREY
+	j createBorder
 
-#	sw $t4, 3968($t0)
 	li $v0, 10
 	syscall
 
@@ -56,9 +148,10 @@ getEnemyLocations:
 	# Generate another random number
 	li $v0, 42
 	li $a0, 0
-	li $a1, 10
+	li $a1, 8
 	syscall
 	
+	addi $a0, $a0, 7
 	mult $a0, $a2
 	mflo $a0
 	addi $a0, $a0, 124
@@ -71,10 +164,10 @@ getEnemyLocations:
 	# Generate another random number
 	li $v0, 42
 	li $a0, 0
-	li $a1, 10
+	li $a1, 8
 	syscall
 	
-	add $a0, $a0, 10
+	add $a0, $a0, 14
 	
 	mult $a0, $a2
 	mflo $a0
@@ -86,9 +179,9 @@ getEnemyLocations:
 	# Generate a third random number
 	li $v0, 42
 	li $a0, 0
-	li $a1, 10
+	li $a1, 8
 	syscall
-	add $a0, $a0, 20
+	add $a0, $a0, 22
 	mult $a0, $a2
 	mflo $a0
 	addi $a0, $a0, 124	
@@ -115,18 +208,48 @@ constantLoop:
 	
 	
 	jal checkCollision
-
 	li $v0, 32
         li $a0, 40 # 25 hertz Refresh rate
         syscall
+
 	j constantLoop
 
 
 
 handleCollision:
-	li $t4, RED
 	
+	# First reduce health so that mixing black pixel can be overwritten
+	jal reduceHealth
+	li $t4, BLACK
+	# Handle stuff with objects first
+	
+	la $t5, ENEMIES
+	lw $a1, 0($t5) # This should give you the first element of array	
+	lw $a2, 4($t5)
+	lw $a3, 8($t5)
+	
+	add $a1, $a1, $t0
+	add $a2, $a2, $t0
+	add $a3, $a3, $t0
+	# First block of 3
+	sw $t4,	0($a1)
+	sw $t4, 128($a1)
+	sw $t4, 256($a1)
+
+	# Second block of 3
+	sw $t4,	0($a2)
+	sw $t4, 128($a2)
+	sw $t4, 256($a2)	
+	
+	# Third block of 3
+	sw $t4,	0($a3)
+	sw $t4, 128($a3)
+	sw $t4, 256($a3)				
+	# Now handle stuff with spaceship
+	li $t4, RED
 	la $t5, SPACESHIP
+	
+	
 	lw $a1, 0($t5) # This should give you the first element of array	
 	lw $a2, 4($t5)
 	lw $a3, 8($t5)
@@ -141,12 +264,15 @@ handleCollision:
 	sw $t4, 0($a2)
 	sw $t4, 0($a3)
 	sw $t4, 0($t7)		
-	        
+	
+	
+	
 	li $v0, 32
-        li $a0, 50 # 25 hertz Refresh rate
+        li $a0, 40 # 25 hertz Refresh rate
         syscall
+
         
-        j constantLoop
+        j getEnemyLocations
         
         
 
@@ -350,6 +476,7 @@ downIsPressed:
 	lw $t7, 12($t5)
 	
 	# Check if it's border
+
 	subi $t6, $a2, 3968
 	bgez $t6, constantLoop	
 	
@@ -383,7 +510,7 @@ upIsPressed:
 	
 	# Check if it's border
 	
-	subi $t6, $a1, 125
+	subi $t6, $a1, 1025
 	blez $t6, constantLoop	
 	
 	
