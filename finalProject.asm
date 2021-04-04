@@ -16,8 +16,10 @@
 .eqv RIGHT 100
 .eqv UP 119
 .eqv DOWN 115
+.eqv P 112
 .eqv GREY 0xC0C0C0
 .eqv BLACK 0x000000
+.eqv GOLDEN 0xFFC107
 
 .data
 	SPACESHIP: .word 1284 1408 1412 1416
@@ -28,6 +30,42 @@
 .globl main	
 
 # Put main loop in here
+
+
+resetVar:
+	la $s1, SPACESHIP
+	la $s2, ENEMIES
+	la $s3, HEALTH
+	
+	addi $s4, $zero, 1284
+	sw $s4, 0($s1)
+	
+
+	addi $s4, $zero, 1408
+	sw $s4, 4($s1)
+	
+	addi $s4, $zero, 1412
+	sw $s4, 8($s1)
+	
+	addi $s4, $zero, 1416
+	sw $s4, 12($s1)
+	
+	# Reset the enemies now
+	addi $s4, $zero, 128
+	sw $s4, 0($s2)
+	
+	addi $s4, $zero, 768
+	sw $s4, 4($s2)
+	
+	addi $s4, $zero, 2304
+	sw $s4, 8($s2)
+	
+	# Reset the health
+	addi $s4, $zero, 348
+	sw $s4, 0($s3)
+	
+	j main
+
 clear:
 	sub $a2, $a1, $t0
 	beq $a2, 4092, endScreen
@@ -35,6 +73,12 @@ clear:
 	addi $a1, $a1, 4
 	j clear
 
+reset:
+	sub $a2, $a1, $t0
+	beq $a2, 4092, resetVar
+	sw $t4, 0($a1)
+	addi $a1, $a1, 4
+	j reset
 clearScreen:
         add $a1, $zero, $t0
 	li $t4, BLACK
@@ -126,6 +170,8 @@ main:
 	syscall
 
 
+
+
 getEnemyLocations:
 	li $t4, TOMATO
 	la $t5, ENEMIES
@@ -140,6 +186,9 @@ getEnemyLocations:
 	mflo $a0
 	addi $a0, $a0, 124
 	sw $a0, 0($t5)
+	
+
+
 	# Generate another random number
 	li $v0, 42
 	li $a0, 0
@@ -150,6 +199,7 @@ getEnemyLocations:
 	mflo $a0
 	addi $a0, $a0, 124
 	sw $a0, 4($t5)
+
 	# Generate a third random number
 	li $v0, 42
 	li $a0, 0
@@ -160,6 +210,7 @@ getEnemyLocations:
 	mflo $a0
 	addi $a0, $a0, 124	
 	sw $a0, 8($t5)
+
 	j constantLoop
 	
 constantLoop:
@@ -424,10 +475,15 @@ keyPressed:
 	beq $t2, RIGHT, rightIsPressed
 	beq $t2, UP, upIsPressed
 	beq $t2, DOWN, downIsPressed
+	beq $t2, P, PisPressed
+	
 	
 	j keyPressed
 	
-	
+PisPressed:
+        add $a1, $zero, $t0
+	li $t4, BLACK
+	j reset	
 
 
 
@@ -607,6 +663,8 @@ endScreen:
         syscall
         
         li $t4, GREEN
+        
+
         # Top of E
         sw $t4, 400($t0)
         sw $t4, 404($t0)
@@ -637,6 +695,128 @@ endScreen:
 	sw $t4, 1436($t0)
 	sw $t4, 1440($t0)		
 	sw $t4, 1444($t0)	
+	
+	# Letter N
+	sw $t4, 432($t0)
+	sw $t4, 560($t0)
+	
+	sw $t4, 564($t0)
+	
+	sw $t4, 688($t0)
+	
+	sw $t4, 696($t0)
+	
+	sw $t4, 816($t0)	
+	
+	sw $t4, 828($t0)
+	
+	sw $t4, 944($t0)
+	
+	sw $t4, 960($t0)
+	
+	sw $t4, 1072($t0)
+	
+	sw $t4, 1092($t0)
+	
+	sw $t4, 1200($t0)
+	
+	sw $t4, 1224($t0)
+	
+	sw $t4, 1328($t0)
+	
+	sw $t4, 1356($t0)
+	
+	sw $t4, 1456($t0)
+	
+
+
+# going up starts
+	sw $t4, 1488($t0)
+	
+	sw $t4, 1360($t0)
+	
+	sw $t4, 1232($t0)
+	
+	sw $t4, 1104($t0)
+	
+	sw $t4, 976($t0)
+	
+	sw $t4, 848($t0)
+	
+	sw $t4, 720($t0)
+	
+	sw $t4, 592($t0)
+	
+	sw $t4, 464($t0)
+	
+	# Letter D
+	
+	sw $t4, 476($t0)
+	sw $t4, 480($t0)
+	sw $t4, 484($t0)
+	
+	sw $t4, 616($t0)
+	sw $t4, 748($t0)
+	sw $t4, 880($t0)
+	sw $t4, 1008($t0)
+	sw $t4, 1136($t0)
+	sw $t4, 1260($t0)
+	sw $t4, 1384($t0)
+	sw $t4, 1384($t0)
+	sw $t4, 1508($t0)
+	sw $t4, 1504($t0)
+	sw $t4, 1500($t0)
+
+	sw $t4, 1372($t0)
+	sw $t4, 1244($t0)
+	sw $t4, 1116($t0)
+	sw $t4, 988($t0)
+	sw $t4, 860($t0)
+	sw $t4, 732($t0)
+	sw $t4, 604($t0)
+	
+	
+	# Letter P
+	li $t4, GOLDEN
+	sw $t4, 1972($t0)
+	sw $t4, 1976($t0)
+	sw $t4, 1980($t0)
+	sw $t4, 1984($t0)
+	sw $t4, 1988($t0)
+	sw $t4, 1972($t0)
+	sw $t4, 2120($t0)
+	sw $t4, 2252($t0)
+	sw $t4, 2380($t0)
+	sw $t4, 2508($t0)
+	sw $t4, 2636($t0)
+	sw $t4, 2760($t0)
+	sw $t4, 2884($t0)
+	sw $t4, 2880($t0)
+	sw $t4, 2876($t0)
+	sw $t4, 2872($t0)
+	
+	sw $t4, 2100($t0)
+	sw $t4, 2228($t0)
+	sw $t4, 2356($t0)
+	sw $t4, 2484($t0)
+	sw $t4, 2612($t0)
+	sw $t4, 2740($t0)
+	sw $t4, 2868($t0)
+	sw $t4, 2996($t0)
+	sw $t4, 3124($t0)
+	sw $t4, 3252($t0)
+	sw $t4, 3380($t0)
+	
+	sw $t4, 3508($t0)
+	
+	
+	li $t9, 0xffff0000 # Set the default address
+	lw $t8, 0($t9)
+	# Check if ANY key was pressed
+	beq $t8, 1, keyPressed	
+	
+	
+	j endScreen
 # $t0 stores the base address for displayli $t1, 0xff0000
 # $t1 stores the red colour codeli $t2, 0x00ff00
 # $t2 stores the green colour codeli $t3, 0x0000ff
