@@ -84,19 +84,13 @@ clearScreen:
 	li $t4, BLACK
 	j clear
 
-reduceHealth: 
-	li $t4, RED
-	la $t5, HEALTH
-	# Load the value of t5
-	lw $a1, 0($t5)
-	
-	add $a1, $a1, $t0
+
+hitOne:
 	
 	# Make the pixels red for a second
 	sw $t4, 0($a1)
 	sw $t4, 128($a1)
-	sw $t4, 4($a1)
-	sw $t4, 132($a1)
+
 	
 	# Put wait timer here
 	li $v0, 32
@@ -107,18 +101,66 @@ reduceHealth:
 	
 	sw $t4, 0($a1)
 	sw $t4, 128($a1)
-	sw $t4, 4($a1)
-	sw $t4, 132($a1)
+
 		
-	# Take away the base address and then add 8 [move 2 to the right]
+	# Take away the base address and then add 4 [move 1 to the right]
 	sub $a1, $a1, $t0
-	addi $a1, $a1, 8
+	addi $a1, $a1, 4
 	
-	beq $a1, 372, clearScreen
+	beq $a1, 376, clearScreen
+	beq $a1, 380, clearScreen
 	sw $a1, 0($t5)
 	
 	
+	jr $ra	
+	
+hitTwo:
+# Make the 2 elements red
+	sw $t4, 0($a1)
+	sw $t4, 4($a1)
+	sw $t4, 128($a1)
+	sw $t4, 132($a1)
+	
+	# Put wait timer here
+	li $v0, 32
+        li $a0, 40 # 25 hertz Refresh rate
+        syscall
+      
+	li $t4, BLACK
+	
+	sw $t4, 0($a1)
+	sw $t4, 4($a1)
+	sw $t4, 128($a1)
+	sw $t4, 132($a1)
+
+	# Take away the base address and then add 4 [move 1 to the right]
+	sub $a1, $a1, $t0
+	addi $a1, $a1, 8
+	
+	beq $a1, 376, clearScreen
+	beq $a1, 380, clearScreen
+	sw $a1, 0($t5)
+	
 	jr $ra
+
+
+reduceHealth: 
+	li $t4, RED
+	la $t5, HEALTH
+	# Load the value of t5
+	
+	lw $a1, 0($t5)
+	add $a1, $a1, $t0
+	# From here
+	lw $a1, 0($t5)
+	
+	add $a1, $a1, $t0
+	
+	beq $s5, 1, hitOne
+	beq $s5, 2, hitTwo
+	
+	
+	
 
 generateHealth:
 
@@ -130,13 +172,15 @@ generateHealth:
 	sw $t4, 360($t0)
 	sw $t4, 364($t0)
 	sw $t4, 368($t0)
+	sw $t4, 372($t0)
 	
 	sw $t4, 476($t0)
 	sw $t4, 480($t0)
 	sw $t4, 484($t0)
 	sw $t4, 488($t0)
 	sw $t4, 492($t0)
-	sw $t4, 496($t0)		
+	sw $t4, 496($t0)
+	sw $t4, 500($t0)		
 	jr $ra
 
 createBorder:
@@ -238,7 +282,19 @@ handleCollision:
 	
 	# First reduce health so that mixing black pixel can be overwritten
 	jal reduceHealth
-	li $t4, BLACK
+					
+	li $v0, 32
+        li $a0, 40 # 25 hertz Refresh rate
+        syscall
+
+        
+        j getEnemyLocations
+       
+       
+colorShip: 
+
+
+li $t4, BLACK
 	# Handle stuff with objects first
 	
 	la $t5, ENEMIES
@@ -262,36 +318,29 @@ handleCollision:
 	# Third block of 3
 	sw $t4,	0($a3)
 	sw $t4, 128($a3)
-	sw $t4, 256($a3)				
-	# Now handle stuff with spaceship
-	li $t4, RED
+	sw $t4, 256($a3)
+
+
+
 	la $t5, SPACESHIP
-	
-	
 	lw $a1, 0($t5) # This should give you the first element of array	
 	lw $a2, 4($t5)
 	lw $a3, 8($t5)
 	lw $t7, 12($t5)
-
+	
 	add $a1, $a1, $t0
 	add $a2, $a2, $t0
 	add $a3, $a3, $t0
 	add $t7, $t7, $t0
 	
-	sw $t4,	0($a1)
-	sw $t4, 0($a2)
-	sw $t4, 0($a3)
-	sw $t4, 0($t7)		
-	
-	
-	
-	li $v0, 32
-        li $a0, 40 # 25 hertz Refresh rate
-        syscall
+	sw $s4,	0($a1)
+	sw $s4, 0($a2)
+	sw $s4, 0($a3)
+	sw $s4, 0($t7)
+		
+	j handleCollision
 
-        
-        j getEnemyLocations
-        
+	
         
 
 checkCollision:
@@ -304,103 +353,110 @@ checkCollision:
 	# Get the first element of enemy object
 	lw $a2, 0($t5)
 	
-	beq $a1, $a2, handleCollision
+	
+	li $s4, GOLDEN
+	addi $s5, $zero, 1
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	
 	# Now check if spaceship first hit second object
+	li $s4, TOMATO
+	addi $s5, $zero, 2
 	lw $a2, 4($t5)
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision	
+	beq $a1, $a2, colorShip	
 	
 	# Now check if spaceship first hit third object
+	
+	# Make the color yellow here for light collision
 	lw $a2, 8($t5)
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision	
+	beq $a1, $a2, colorShip	
 	
 	# CheckCheck if spaceship second hit first object
 	lw $a1, 4($t4)
 	lw  $a2, 0($t5)
 	
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision	
+	beq $a1, $a2, colorShip	
 	
 	# Chcek if spaceship second hit second object
 	lw $a2, 4($t5)
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision	
+	beq $a1, $a2, colorShip	
 	
 	# Check if spaceship second hit third object
 	lw $a2, 8($t5)
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision	
+	beq $a1, $a2, colorShip	
 	
 	# Check if spaceship third hit first object
 	lw $a1, 8($t4)
 	lw  $a2, 0($t5)
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision		
+	beq $a1, $a2, colorShip		
 	
 	# Check if spaceship third hit second object
 	
 	lw $a2, 4($t5)
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	
 	# Check if spaceship third hit third object
 	lw $a2, 8($t5)
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision	
+	beq $a1, $a2, colorShip	
 	
 	# Check 4th element now
 	lw $a1, 12($t4)
 	lw  $a2, 0($t5)	
 	# Check the 4th element with the first object
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision		
+	beq $a1, $a2, colorShip		
 	
 	lw $a2, 4($t5)
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision		
+	beq $a1, $a2, colorShip		
 	
 	lw $a2, 8($t5)
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision
+	beq $a1, $a2, colorShip
 	addi $a2, $a2, 128
-	beq $a1, $a2, handleCollision		
+	beq $a1, $a2, colorShip		
 	
 	jr $ra
 
