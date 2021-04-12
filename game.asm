@@ -11,7 +11,7 @@
 # -Display height in pixels: 256
 # -Base Address for Display: 0x10008000 ($gp)
 #
-# Which milestoneshave beenreached in this submission?
+# Which milestones have been reached in this submission?
 # -Milestone 4 (Finished project)
 
 # Which approved features have been implemented for milestone 4?
@@ -21,11 +21,12 @@
 # 3.) Increasing difficulty over time
 
 # Link to video demonstration for final submission:
-# <INSERT YOUTUBE VIDEO HERE>!!!
+# https://youtu.be/nAbLcPT7gA4
 
 # Are you OK with us sharing the video with people outside course staff?
 # Yes!
 # Project github link:
+# https://github.com/Samyakk123/Assembly-Game
 
 # Additional Info for TA:
 # Hope you like my game :)
@@ -440,6 +441,18 @@ colorShip:
 	sw $s4, 0($a3)
 	sw $s4, 0($t7)
 	# Jump to handleCollision
+	
+	
+	li $v0, 32
+        li $a0, 120
+        syscall	
+
+	li $s4, SHIPCOLOR
+	sw $s4,	0($a1)
+	sw $s4, 0($a2)
+	sw $s4, 0($a3)
+	sw $s4, 0($t7)	
+	
 	j handleCollision
 
 	
@@ -630,6 +643,11 @@ incrementEnemy:
 	sw $t4, 256($a3)
 	# Jump back to function caller
 	jr $ra
+
+checkRestartPressed:
+	lw $t2, 4($t9)
+	beq $t2, P, PisPressed
+	j checkRestartPressed
 
 keyPressed:
 	# Save ship color inside t4 to use later
@@ -879,7 +897,7 @@ endScreen:
 	sw $t4, 1444($t0)	
 	
 	# Drawing the letter N
-	sw $t4, 432($t0
+	sw $t4, 432($t0)
 	sw $t4, 560($t0)
 	sw $t4, 564($t0)
 	sw $t4, 688($t0)
@@ -969,7 +987,7 @@ endScreen:
 	li $t9, 0xffff0000 
 	lw $t8, 0($t9)
 	# Check if ANY key was pressed (can't end program, need to check for p press)
-	beq $t8, 1, keyPressed	
+	beq $t8, 1, checkRestartPressed	
 	
 	# Loop over this tag
 	j endScreen
